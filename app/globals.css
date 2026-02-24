@@ -1,0 +1,667 @@
+@import "tailwindcss";
+
+/* ============================================
+   DESIGN SYSTEM — Frostrek Sales Dashboard
+   ❄️ Frost-Themed Edition
+   ============================================ */
+
+:root {
+  /* Sidebar — deep frost */
+  --sidebar-bg: linear-gradient(180deg, #070b1a 0%, #0c1629 40%, #111d35 100%);
+  --sidebar-surface: rgba(130, 180, 255, 0.06);
+  --sidebar-surface-hover: rgba(130, 180, 255, 0.10);
+  --sidebar-surface-active: rgba(99, 175, 241, 0.20);
+  --sidebar-text: #dce8f8;
+  --sidebar-text-muted: #7ba0c9;
+  --sidebar-border: rgba(130, 180, 255, 0.10);
+
+  /* Main panel — icy white */
+  --panel-bg: #f0f4fa;
+  --panel-surface: rgba(255, 255, 255, 0.85);
+  --panel-text: #1a2a42;
+  --panel-text-muted: #5a7090;
+  --panel-border: rgba(180, 210, 240, 0.5);
+
+  /* Accent — frosty blue/indigo */
+  --accent: #5b8eff;
+  --accent-light: #7db4ff;
+  --accent-surface: rgba(91, 142, 255, 0.10);
+  --frost-glow: rgba(120, 180, 255, 0.35);
+  --ice-shimmer: rgba(180, 220, 255, 0.6);
+
+  /* Messages */
+  --msg-user-bg: linear-gradient(135deg, #4a7cff 0%, #5b5ef0 50%, #7c5bf0 100%);
+  --msg-user-text: #ffffff;
+  --msg-assistant-bg: rgba(255, 255, 255, 0.75);
+  --msg-assistant-text: #1a2a42;
+  --msg-assistant-border: rgba(180, 210, 240, 0.4);
+
+  /* Status */
+  --status-open-bg: rgba(34, 197, 94, 0.12);
+  --status-open-text: #16a34a;
+  --status-open-dot: #22c55e;
+  --status-closed-bg: rgba(148, 163, 184, 0.12);
+  --status-closed-text: #64748b;
+  --status-closed-dot: #94a3b8;
+
+  /* Misc */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --shadow-sm: 0 1px 4px rgba(10, 30, 60, 0.06);
+  --shadow-md: 0 4px 16px rgba(10, 30, 60, 0.08);
+  --shadow-lg: 0 8px 32px rgba(10, 30, 60, 0.12);
+  --shadow-frost: 0 0 20px rgba(120, 180, 255, 0.15), 0 0 60px rgba(120, 180, 255, 0.05);
+  --transition: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@theme inline {
+  --color-background: var(--panel-bg);
+  --color-foreground: var(--panel-text);
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* ──── Base ──── */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* ──── Scrollbar ──── */
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 160, 210, 0.3);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 160, 210, 0.5);
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  FROST ANIMATIONS
+   ══════════════════════════════════════════════ */
+
+/* ── Floating snowflakes ── */
+
+@keyframes snowfall {
+  0% {
+    transform: translateY(-10vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateY(105vh) translateX(30px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes snowfall-drift {
+  0% {
+    transform: translateY(-10vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translateY(50vh) translateX(-20px) rotate(180deg);
+  }
+
+  90% {
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: translateY(105vh) translateX(15px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.snowflake {
+  position: fixed;
+  color: rgba(180, 215, 255, 0.7);
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 9999;
+  filter: blur(0.5px);
+  text-shadow: 0 0 6px rgba(150, 200, 255, 0.5);
+}
+
+/* ── Ice shimmer across surfaces ── */
+
+@keyframes iceShimmer {
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes frostPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(120, 180, 255, 0.08);
+  }
+
+  50% {
+    box-shadow: 0 0 25px rgba(120, 180, 255, 0.18), 0 0 50px rgba(120, 180, 255, 0.05);
+  }
+}
+
+@keyframes auroraShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes frostBreath {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(5px);
+    filter: blur(2px);
+  }
+
+  30% {
+    opacity: 0.15;
+    filter: blur(8px);
+  }
+
+  70% {
+    opacity: 0.08;
+    transform: scale(1.5) translateY(-15px);
+    filter: blur(12px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2) translateY(-30px);
+    filter: blur(18px);
+  }
+}
+
+@keyframes crystalSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  25% {
+    transform: rotate(90deg) scale(1.05);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1);
+  }
+
+  75% {
+    transform: rotate(270deg) scale(0.95);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes iceGlint {
+
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* ── Existing slide/fade animations (enhanced) ── */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+    filter: blur(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out both;
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  FROSTED GLASS SURFACES
+   ══════════════════════════════════════════════ */
+
+/* Sidebar frosted glass effect */
+.frost-sidebar {
+  background: var(--sidebar-bg) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.frost-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 300px 200px at 10% 20%, rgba(100, 160, 255, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 200px 300px at 80% 70%, rgba(130, 100, 255, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 250px 150px at 50% 90%, rgba(80, 180, 255, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.frost-sidebar::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg,
+      transparent 40%,
+      rgba(150, 200, 255, 0.03) 45%,
+      rgba(150, 200, 255, 0.06) 50%,
+      rgba(150, 200, 255, 0.03) 55%,
+      transparent 60%);
+  animation: iceShimmer 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.frost-sidebar>* {
+  position: relative;
+  z-index: 1;
+}
+
+/* Panel frost overlay */
+.frost-panel {
+  position: relative;
+  background:
+    radial-gradient(ellipse 600px 400px at 70% 30%, rgba(120, 180, 255, 0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 500px at 30% 80%, rgba(160, 120, 255, 0.03) 0%, transparent 70%),
+    var(--panel-bg) !important;
+}
+
+/* Frosted glass card */
+.frost-card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(180, 210, 240, 0.3);
+  transition: var(--transition);
+}
+
+.frost-card:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(120, 180, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(100, 160, 255, 0.1);
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  FROST BRAND LOGO
+   ══════════════════════════════════════════════ */
+
+.frost-logo {
+  position: relative;
+  background: linear-gradient(135deg, #4a7cff 0%, #5b5ef0 40%, #7c5bf0 100%) !important;
+  background-size: 200% 200% !important;
+  animation: auroraShift 4s ease-in-out infinite, frostPulse 3s ease-in-out infinite;
+}
+
+.frost-logo::after {
+  content: "✦";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 8px;
+  color: #b4dcff;
+  animation: iceGlint 3s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  CONVERSATION CARDS — frost hover
+   ══════════════════════════════════════════════ */
+
+.conv-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.conv-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(150, 200, 255, 0.08) 50%,
+      transparent 100%);
+  transition: left 600ms ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.conv-card:hover::before {
+  left: 100%;
+}
+
+.conv-card.active {
+  animation: frostPulse 3s ease-in-out infinite;
+}
+
+.conv-card>* {
+  position: relative;
+  z-index: 1;
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  MESSAGE BUBBLES — enhanced frost style
+   ══════════════════════════════════════════════ */
+
+.msg-bubble {
+  max-width: 65%;
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+  animation: fadeInUp 0.35s ease-out both;
+  position: relative;
+}
+
+/* User bubbles — icy gradient with glow */
+.msg-bubble.user {
+  background: var(--msg-user-bg);
+  color: var(--msg-user-text);
+  border-bottom-right-radius: 4px;
+  box-shadow:
+    0 2px 12px rgba(75, 120, 255, 0.3),
+    0 0 20px rgba(90, 90, 240, 0.1);
+}
+
+.msg-bubble.user::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(180, 220, 255, 0.4), transparent);
+  border-radius: inherit;
+}
+
+/* Assistant bubbles — frosted glass */
+.msg-bubble.assistant {
+  background: var(--msg-assistant-bg);
+  color: var(--msg-assistant-text);
+  border: 1px solid var(--msg-assistant-border);
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.msg-bubble.assistant::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(180, 220, 255, 0.5), transparent);
+  border-radius: inherit;
+}
+
+.msg-time {
+  font-size: 11px;
+  margin-top: 6px;
+  opacity: 0.6;
+}
+
+.msg-bubble.user .msg-time {
+  text-align: right;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.msg-bubble.assistant .msg-time {
+  text-align: left;
+  color: var(--panel-text-muted);
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  STATUS BADGES
+   ══════════════════════════════════════════════ */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-badge.open {
+  background: var(--status-open-bg);
+  color: var(--status-open-text);
+}
+
+.status-badge.open .dot {
+  background: var(--status-open-dot);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.status-badge.closed {
+  background: var(--status-closed-bg);
+  color: var(--status-closed-text);
+}
+
+.status-badge.closed .dot {
+  background: var(--status-closed-dot);
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  SEARCH INPUT — frost focus ring
+   ══════════════════════════════════════════════ */
+
+.frost-search {
+  transition: all 280ms ease;
+}
+
+.frost-search:focus {
+  border-color: var(--accent) !important;
+  box-shadow:
+    0 0 0 3px rgba(91, 142, 255, 0.15),
+    0 0 20px rgba(120, 180, 255, 0.1) !important;
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  HEADER BAR — frosted glass
+   ══════════════════════════════════════════════ */
+
+.frost-header {
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-bottom: 1px solid rgba(180, 210, 240, 0.35) !important;
+  box-shadow: 0 1px 8px rgba(100, 160, 255, 0.06);
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  EMPTY STATE — frost crystal decoration
+   ══════════════════════════════════════════════ */
+
+.frost-empty-icon {
+  position: relative;
+  animation: frostPulse 4s ease-in-out infinite;
+}
+
+.frost-empty-icon::before,
+.frost-empty-icon::after {
+  content: "❄";
+  position: absolute;
+  font-size: 12px;
+  color: var(--accent-light);
+  opacity: 0.5;
+}
+
+.frost-empty-icon::before {
+  top: -8px;
+  right: -8px;
+  animation: crystalSpin 8s linear infinite;
+}
+
+.frost-empty-icon::after {
+  bottom: -6px;
+  left: -6px;
+  animation: crystalSpin 12s linear infinite reverse;
+  font-size: 10px;
+}
+
+/* ── Stat cards ── */
+
+.frost-stat {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(180, 210, 240, 0.3);
+  border-radius: var(--radius-md);
+  padding: 16px 24px;
+  text-align: center;
+  transition: all 300ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.frost-stat::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-light), transparent);
+  opacity: 0.5;
+}
+
+.frost-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(100, 160, 255, 0.12);
+  border-color: rgba(120, 180, 255, 0.4);
+}
+
+/* ══════════════════════════════════════════════
+   ❄️  MSG COUNT BADGE — icy pill
+   ══════════════════════════════════════════════ */
+
+.frost-badge {
+  background: rgba(91, 142, 255, 0.12);
+  color: var(--accent-light);
+  border: 1px solid rgba(91, 142, 255, 0.15);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 99px;
+  letter-spacing: 0.3px;
+  transition: all 200ms ease;
+}
+
+.conv-card:hover .frost-badge {
+  background: rgba(91, 142, 255, 0.2);
+  border-color: rgba(91, 142, 255, 0.3);
+  box-shadow: 0 0 8px rgba(91, 142, 255, 0.2);
+}
