@@ -104,6 +104,7 @@ function Snowflakes() {
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth()
+  // Auth is now powered by Clerk via the useAuth compatibility wrapper
   const router = useRouter()
   const [allMessages, setAllMessages] = useState<Message[]>([])
   const [conversations, setConversations] = useState<ConversationPreview[]>([])

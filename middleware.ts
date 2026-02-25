@@ -1,49 +1,41 @@
-import { NextRequest, NextResponse } from "next/server";
-import { decrypt, SESSION_COOKIE_NAME } from "./lib/auth";
+import { clerkMiddleware, createRouteMatcher, clerkClient } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-// Protected routes
-const protectedRoutes = ["/", "/dashboard", "/admin"];
-const apiProtectedRoutes = ["/api/tickets", "/api/users"];
+const isPublicRoute = createRouteMatcher([
+    "/login(.*)",
+    "/sign-up(.*)",
+    "/unauthorized(.*)",
+    "/api/webhooks(.*)",
+]);
 
-export async function middleware(request: NextRequest) {
-    const path = request.nextUrl.pathname;
+const ALLOWED_DOMAIN = "@frostrek.com";
 
-    // Check if the path is protected
-    const isProtectedRoute = protectedRoutes.some(route => path === route || path.startsWith(`${route}/`));
-    const isApiProtectedRoute = apiProtectedRoutes.some(route => path.startsWith(route));
+export default clerkMiddleware(async (auth, request) => {
+    if (!isPublicRoute(request)) {
+        const { userId } = await auth.protect();
 
-    const cookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-    const session = cookie ? await decrypt(cookie).catch(() => null) : null;
+        // Fetch full user record and validate email domain
+        const client = await clerkClient();
+        const user = await client.users.getUser(userId);
+        const email = user.emailAddresses
+            .find((e) => e.id === user.primaryEmailAddressId)
+            ?.emailAddress;
 
-    // Redirect to /login if not authenticated and trying to access protected route
-    if ((isProtectedRoute || isApiProtectedRoute) && !session) {
-        if (path === "/login") return NextResponse.next();
-
-        // For API routes, return 401
-        if (path.startsWith("/api/")) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        if (!email || !email.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
+            const unauthorizedUrl = new URL("/unauthorized", request.url);
+            return NextResponse.redirect(unauthorizedUrl);
         }
-
-        return NextResponse.redirect(new URL("/login", request.nextUrl));
     }
-
-    // Redirect to / if authenticated and trying to access /login
-    if (path === "/login" && session) {
-        return NextResponse.redirect(new URL("/", request.nextUrl));
-    }
-
-    return NextResponse.next();
-}
+});
 
 export const config = {
     matcher: [
         /*
          * Match all request paths except for the ones starting with:
-         * - api/auth (auth API routes)
          * - _next/static (static files)
          * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
+         * - favicon.ico, sitemap.xml, robots.txt
          */
-        "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+        "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
     ],
 };

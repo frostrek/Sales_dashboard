@@ -1,72 +1,60 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
+import { useEffect, useRef } from "react"
 
-interface User {
-    email: string
-    name: string
-    role: string
-}
+const ALLOWED_DOMAIN = "@frostrek.com"
 
-interface AuthContextType {
-    user: User | null
-    loading: boolean
-    signOut: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null)
-    const [loading, setLoading] = useState(true)
+/**
+ * Compatibility wrapper around Clerk's hooks.
+ * Provides the same `useAuth()` interface the rest of the app expects,
+ * so we don't have to touch every consumer at once.
+ *
+ * Also enforces @frostrek.com email restriction client-side
+ * as a defense-in-depth measure (middleware is the primary gate).
+ */
+export function useAuth() {
+    const { user, isLoaded, isSignedIn } = useUser()
+    const { signOut: clerkSignOut } = useClerk()
     const router = useRouter()
+    const hasCheckedDomain = useRef(false)
 
+    const email = user?.primaryEmailAddress?.emailAddress ?? ""
+    const isAllowedDomain = email.toLowerCase().endsWith(ALLOWED_DOMAIN)
+
+    // Client-side domain enforcement
     useEffect(() => {
-        async function loadUser() {
-            try {
-                // In a production app, we would have an API to get the current user session
-                // For now, we'll try to get it from a local check or just let middleware handle it
-                // and have the login page refresh the state.
-                // However, since we want a "useAuth" hook, we can fetch from a session endpoint.
-                const res = await fetch("/api/auth/session")
-                if (res.ok) {
-                    const data = await res.json()
-                    setUser(data.user)
-                } else {
-                    setUser(null)
-                }
-            } catch (err) {
-                setUser(null)
-            } finally {
-                setLoading(false)
+        if (isLoaded && isSignedIn && !hasCheckedDomain.current) {
+            hasCheckedDomain.current = true
+            if (!isAllowedDomain) {
+                clerkSignOut({ redirectUrl: "/unauthorized" })
             }
         }
-        loadUser()
-    }, [])
+    }, [isLoaded, isSignedIn, isAllowedDomain, clerkSignOut])
 
     const signOut = async () => {
-        try {
-            await fetch("/api/auth/logout", { method: "POST" })
-            setUser(null)
-            router.push("/login")
-            router.refresh()
-        } catch (err) {
-            console.error("Logout failed:", err)
+        await clerkSignOut()
+        router.push("/login")
+    }
+
+    // Build a user-like object matching the old shape
+    const profile = isLoaded && isSignedIn && user && isAllowedDomain
+        ? {
+            email,
+            name: user.fullName ?? user.firstName ?? "",
+            role: (user.publicMetadata?.role as string) ?? "sales",
         }
-    }
+        : null
 
-    return (
-        <AuthContext.Provider value={{ user, loading, signOut }}>
-            {children}
-        </AuthContext.Provider>
-    )
+    return {
+        user: profile,
+        profile, // admin page uses `profile`
+        loading: !isLoaded,
+        signOut,
+    }
 }
 
-export const useAuth = () => {
-    const context = useContext(AuthContext)
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider")
-    }
-    return context
-}
+// Keep the old export name alive so existing imports still resolve
+export { useAuth as AuthProvider }
+
