@@ -1,13 +1,20 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-export function middleware(request: NextRequest) {
-    // Pass-through middleware. Clerk route protection is handled in layout.tsx.
-    return NextResponse.next();
-}
+const isPublicRoute = createRouteMatcher([
+    "/login(.*)",
+    "/sign-up(.*)",
+    "/unauthorized(.*)",
+    "/api/webhooks(.*)",
+]);
+
+export default clerkMiddleware(async (auth, request) => {
+    if (!isPublicRoute(request)) {
+        await auth.protect();
+    }
+});
 
 export const config = {
     matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+        "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
     ],
 };

@@ -3,7 +3,6 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Sales Conversation Dashboard — Frostrek LLP",
@@ -11,25 +10,15 @@ export const metadata: Metadata = {
 };
 
 const ALLOWED_DOMAIN = "@frostrek.com";
-const PUBLIC_PATHS = ["/login", "/sign-up", "/unauthorized"];
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Get current path to check if it's public
-  const headersList = await headers();
-  const domain = headersList.get("host") || "";
-  const fullUrl = headersList.get("referer") || "";
-  const isPublic = PUBLIC_PATHS.some(path => fullUrl.includes(path));
-
-  // Server-side authentication and email domain enforcement (Node.js runtime)
+  // Server-side email domain enforcement (only for authenticated users)
+  // Route protection (login redirect) is handled by clerkMiddleware in middleware.ts
   const user = await currentUser();
-
-  if (!user && !isPublic) {
-    redirect("/login");
-  }
 
   if (user) {
     const email = user.emailAddresses.find(
@@ -39,6 +28,7 @@ export default async function RootLayout({
       redirect("/unauthorized");
     }
   }
+
   return (
     <ClerkProvider
       appearance={{
