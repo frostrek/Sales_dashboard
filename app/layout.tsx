@@ -3,6 +3,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Sales Conversation Dashboard — Frostrek LLP",
@@ -14,12 +15,22 @@ const PUBLIC_PATHS = ["/login", "/sign-up", "/unauthorized"];
 
 export default async function RootLayout({
   children,
-  // We receive request pathname via Next.js internal headers when needed
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Server-side email domain enforcement (runs in Node.js runtime, not Edge)
+  // Get current path to check if it's public
+  const headersList = await headers();
+  const domain = headersList.get("host") || "";
+  const fullUrl = headersList.get("referer") || "";
+  const isPublic = PUBLIC_PATHS.some(path => fullUrl.includes(path));
+
+  // Server-side authentication and email domain enforcement (Node.js runtime)
   const user = await currentUser();
+
+  if (!user && !isPublic) {
+    redirect("/login");
+  }
+
   if (user) {
     const email = user.emailAddresses.find(
       (e) => e.id === user.primaryEmailAddressId
