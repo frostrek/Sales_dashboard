@@ -134,11 +134,16 @@ export default function Dashboard() {
   /* ── Fetch tickets ── */
 
   const fetchTickets = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("tickets")
       .select("ticket_id, user_email, status, ticket_number")
 
+    if (error) {
+      console.error("[Supabase] fetchTickets error:", error.message, error)
+      return
+    }
     if (data) {
+      console.log("[Supabase] fetchTickets: got", data.length, "tickets")
       const map = new Map<string, Ticket>()
       for (const t of data) {
         map.set(t.ticket_id, t as Ticket)
@@ -159,10 +164,17 @@ export default function Dashboard() {
       .select("*")
       .order("created_at", { ascending: true })
 
-    if (error || !data) {
+    if (error) {
+      console.error("[Supabase] fetchAllMessages error:", error.message, error)
       setLoading(false)
       return
     }
+    if (!data) {
+      console.warn("[Supabase] fetchAllMessages: no data returned")
+      setLoading(false)
+      return
+    }
+    console.log("[Supabase] fetchAllMessages: got", data.length, "rows")
 
     const messages = data as Message[]
     setAllMessages(messages)
