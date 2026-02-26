@@ -270,7 +270,10 @@ export default function Dashboard() {
           schema: "public",
           table: "chat_logs",
         },
-        () => fetchAllMessages()
+        (payload) => {
+          console.log("[Realtime] chat_logs change:", payload)
+          fetchAllMessages()
+        }
       )
       .on(
         "postgres_changes",
@@ -279,14 +282,30 @@ export default function Dashboard() {
           schema: "public",
           table: "tickets",
         },
-        () => fetchTickets()
+        (payload) => {
+          console.log("[Realtime] tickets change:", payload)
+          fetchTickets()
+        }
       )
-      .subscribe()
+      .subscribe((status, err) => {
+        console.log("[Realtime] subscription status:", status, err ?? "")
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.warn("[Realtime] Subscription failed — falling back to polling")
+        }
+      })
+
+    // Polling fallback: refresh every 30s in case WebSocket is blocked
+    const pollInterval = setInterval(() => {
+      fetchAllMessages()
+      fetchTickets()
+    }, 30000)
 
     return () => {
       supabase.removeChannel(channel)
+      clearInterval(pollInterval)
     }
   }, [fetchAllMessages, fetchTickets])
+
 
   // Refresh thread when selected
   useEffect(() => {
