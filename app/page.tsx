@@ -104,7 +104,6 @@ function Snowflakes() {
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth()
-  // Auth is now powered by Clerk via the useAuth compatibility wrapper
   const router = useRouter()
   const [allMessages, setAllMessages] = useState<Message[]>([])
   const [conversations, setConversations] = useState<ConversationPreview[]>([])
@@ -120,14 +119,7 @@ export default function Dashboard() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    // Only redirect to login once Clerk has fully loaded and confirms no user
-    if (!authLoading && !user) {
-      // Give a small grace period before redirecting so Clerk can fully initialize
-      const timer = setTimeout(() => router.push("/login"), 500)
-      return () => clearTimeout(timer)
-    }
-  }, [user, authLoading, router])
+  // Auth removed — no login redirect needed
 
   const handleSignOut = async () => {
     await signOut()
@@ -162,24 +154,41 @@ export default function Dashboard() {
   /* ── Fetch ALL messages and build conversation list ── */
 
   const fetchAllMessages = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("chat_logs")
-      .select("*")
-      .order("created_at", { ascending: true })
+    // Supabase returns max 1000 rows per request — paginate to get ALL
+    let allData: Message[] = []
+    let from = 0
+    const PAGE_SIZE = 1000
+    let hasMore = true
 
-    if (error) {
-      console.error("[Supabase] fetchAllMessages error:", error.message, error)
-      setLoading(false)
-      return
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("chat_logs")
+        .select("*")
+        .order("created_at", { ascending: true })
+        .range(from, from + PAGE_SIZE - 1)
+
+      if (error) {
+        console.error("[Supabase] fetchAllMessages error:", error.message, error)
+        setLoading(false)
+        return
+      }
+      if (!data || data.length === 0) {
+        hasMore = false
+      } else {
+        allData = allData.concat(data as Message[])
+        from += PAGE_SIZE
+        if (data.length < PAGE_SIZE) hasMore = false
+      }
     }
-    if (!data) {
+
+    if (allData.length === 0) {
       console.warn("[Supabase] fetchAllMessages: no data returned")
       setLoading(false)
       return
     }
-    console.log("[Supabase] fetchAllMessages: got", data.length, "rows")
+    console.log("[Supabase] fetchAllMessages: got", allData.length, "rows")
 
-    const messages = data as Message[]
+    const messages = allData
     setAllMessages(messages)
 
     // Build conversation previews
@@ -275,6 +284,13 @@ export default function Dashboard() {
 
   /* ── Realtime subscription ── */
 
+  // Use refs so the subscription callback always calls the latest fetch functions
+  // without needing to teardown/reconnect the channel on every render.
+  const fetchAllMessagesRef = useRef(fetchAllMessages)
+  const fetchTicketsRef = useRef(fetchTickets)
+  useEffect(() => { fetchAllMessagesRef.current = fetchAllMessages }, [fetchAllMessages])
+  useEffect(() => { fetchTicketsRef.current = fetchTickets }, [fetchTickets])
+
   useEffect(() => {
     const channel = supabase
       .channel("db-changes")
@@ -287,7 +303,7 @@ export default function Dashboard() {
         },
         (payload) => {
           console.log("[Realtime] chat_logs change:", payload)
-          fetchAllMessages()
+          fetchAllMessagesRef.current()
         }
       )
       .on(
@@ -299,7 +315,7 @@ export default function Dashboard() {
         },
         (payload) => {
           console.log("[Realtime] tickets change:", payload)
-          fetchTickets()
+          fetchTicketsRef.current()
         }
       )
       .subscribe((status, err) => {
@@ -311,15 +327,15 @@ export default function Dashboard() {
 
     // Polling fallback: refresh every 10s for near-realtime sync
     const pollInterval = setInterval(() => {
-      fetchAllMessages()
-      fetchTickets()
+      fetchAllMessagesRef.current()
+      fetchTicketsRef.current()
     }, 10000)
 
     return () => {
       supabase.removeChannel(channel)
       clearInterval(pollInterval)
     }
-  }, [fetchAllMessages, fetchTickets])
+  }, []) // Empty deps — subscribe once, use refs for latest functions
 
 
   // Refresh thread when selected
@@ -460,16 +476,7 @@ export default function Dashboard() {
     [conversations, selectedId]
   )
 
-  if (!authLoading && !user) {
-    return (
-      <div className="flex items-center justify-center h-screen" style={{ background: "#0a1120" }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
-          <span className="text-slate-400 font-medium tracking-wide">Redirecting to login...</span>
-        </div>
-      </div>
-    )
-  }
+  // Auth removed — dashboard always renders
 
   /* ─────────────────── UI ─────────────────── */
 
@@ -795,6 +802,13 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex flex-col gap-1">
+              <button
+                onClick={() => router.push("/contacts")}
+                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400"
+                title="Contacts"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              </button>
               {user?.role === 'admin' && (
                 <button
                   onClick={() => router.push("/admin")}

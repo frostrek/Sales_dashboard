@@ -1,9 +1,11 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// clerkMiddleware() WITHOUT auth.protect() — just attaches Clerk auth context.
-// auth.protect() crashes on Vercel Edge with Next.js 16, so route protection
-// is handled client-side in page.tsx and domain enforcement in layout.tsx.
-export default clerkMiddleware();
+// No-op middleware — Clerk auth has been removed.
+// Just pass all requests through.
+export function middleware(_request: NextRequest) {
+    return NextResponse.next();
+}
 
 export const config = {
     matcher: [

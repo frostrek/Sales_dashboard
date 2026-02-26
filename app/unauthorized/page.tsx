@@ -1,21 +1,8 @@
 "use client"
 
-import { useClerk } from "@clerk/nextjs"
-import { useEffect, useRef } from "react"
 import Link from "next/link"
 
 export default function UnauthorizedPage() {
-    const { signOut } = useClerk()
-    const signedOut = useRef(false)
-
-    // Auto sign-out unauthorized users
-    useEffect(() => {
-        if (!signedOut.current) {
-            signedOut.current = true
-            signOut({ redirectUrl: "/unauthorized" })
-        }
-    }, [signOut])
-
     return (
         <div
             className="min-h-screen flex items-center justify-center relative overflow-hidden"
@@ -67,16 +54,16 @@ export default function UnauthorizedPage() {
                     are authorized to use this application.
                 </p>
 
-                {/* Back to login */}
+                {/* Back to dashboard */}
                 <Link
-                    href="/login"
+                    href="/"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-bold text-sm transition-all duration-200"
                     style={{
                         background: "linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)",
                         boxShadow: "0 8px 24px -6px rgba(79, 70, 229, 0.5)",
                     }}
                 >
-                    ← Back to Login
+                    ← Back to Dashboard
                 </Link>
 
                 <p className="mt-10 text-slate-600 text-xs font-medium">
