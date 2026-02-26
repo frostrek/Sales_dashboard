@@ -1,17 +1,9 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-const isPublicRoute = createRouteMatcher([
-    "/login(.*)",
-    "/sign-up(.*)",
-    "/unauthorized(.*)",
-    "/api/webhooks(.*)",
-]);
-
-export default clerkMiddleware(async (auth, request) => {
-    if (!isPublicRoute(request)) {
-        await auth.protect();
-    }
-});
+// clerkMiddleware() WITHOUT auth.protect() — just attaches Clerk auth context.
+// auth.protect() crashes on Vercel Edge with Next.js 16, so route protection
+// is handled client-side in page.tsx and domain enforcement in layout.tsx.
+export default clerkMiddleware();
 
 export const config = {
     matcher: [
