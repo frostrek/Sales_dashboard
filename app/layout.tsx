@@ -1,17 +1,33 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Sales Conversation Dashboard — Frostrek LLP",
   description: "CRM-style support conversation dashboard powered by Supabase",
 };
 
-export default function RootLayout({
+const ALLOWED_DOMAIN = "@frostrek.com";
+const PUBLIC_PATHS = ["/login", "/sign-up", "/unauthorized"];
+
+export default async function RootLayout({
   children,
+  // We receive request pathname via Next.js internal headers when needed
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Server-side email domain enforcement (runs in Node.js runtime, not Edge)
+  const user = await currentUser();
+  if (user) {
+    const email = user.emailAddresses.find(
+      (e) => e.id === user.primaryEmailAddressId
+    )?.emailAddress;
+    if (!email || !email.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
+      redirect("/unauthorized");
+    }
+  }
   return (
     <ClerkProvider
       appearance={{
