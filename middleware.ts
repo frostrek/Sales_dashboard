@@ -12,7 +12,9 @@ const ALLOWED_DOMAIN = "@frostrek.com";
 
 export default clerkMiddleware(async (auth, request) => {
     if (!isPublicRoute(request)) {
-        const { userId } = await auth.protect();
+        const { userId } = await auth.protect({
+            unauthenticatedUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || '/login',
+        });
 
         // Fetch full user record and validate email domain
         const client = await clerkClient();
