@@ -121,8 +121,11 @@ export default function Dashboard() {
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Only redirect to login once Clerk has fully loaded and confirms no user
     if (!authLoading && !user) {
-      router.push("/login")
+      // Give a small grace period before redirecting so Clerk can fully initialize
+      const timer = setTimeout(() => router.push("/login"), 500)
+      return () => clearTimeout(timer)
     }
   }, [user, authLoading, router])
 
@@ -457,12 +460,12 @@ export default function Dashboard() {
     [conversations, selectedId]
   )
 
-  if (authLoading || !user) {
+  if (!authLoading && !user) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: "#0a1120" }}>
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
-          <span className="text-slate-400 font-medium tracking-wide">Authenticating...</span>
+          <span className="text-slate-400 font-medium tracking-wide">Redirecting to login...</span>
         </div>
       </div>
     )
