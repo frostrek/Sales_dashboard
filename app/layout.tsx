@@ -1,34 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Sales Conversation Dashboard — Frostrek LLP",
   description: "CRM-style support conversation dashboard powered by Supabase",
 };
 
-const ALLOWED_DOMAIN = "@frostrek.com";
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Server-side email domain enforcement (only for authenticated users)
-  // Route protection (login redirect) is handled by clerkMiddleware in middleware.ts
-  const user = await currentUser();
-
-  if (user) {
-    const email = user.emailAddresses.find(
-      (e) => e.id === user.primaryEmailAddressId
-    )?.emailAddress;
-    if (!email || !email.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
-      redirect("/unauthorized");
-    }
-  }
-
+  // Auth + @frostrek.com domain enforcement handled client-side in AuthContext.tsx
+  // clerkMiddleware() in middleware.ts attaches auth context to requests
   return (
     <ClerkProvider
       appearance={{

@@ -309,11 +309,11 @@ export default function Dashboard() {
         }
       })
 
-    // Polling fallback: refresh every 30s in case WebSocket is blocked
+    // Polling fallback: refresh every 10s for near-realtime sync
     const pollInterval = setInterval(() => {
       fetchAllMessages()
       fetchTickets()
-    }, 30000)
+    }, 10000)
 
     return () => {
       supabase.removeChannel(channel)
